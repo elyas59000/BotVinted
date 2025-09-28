@@ -16,11 +16,20 @@ def check_vinted():
     r = requests.get(url, params=params)
     data = r.json()
 
-    for item in data.get("items", []):
+    if "items" not in data:
+        print("⚠️ Erreur API Vinted :", data)
+        return
+
+    for item in data["items"]:
         message = f"**{item['title']}** - {item['price']}€\n{item['url']}"
         requests.post(WEBHOOK_URL, json={"content": message})
 
 if __name__ == "__main__":
-    while True:
+    # Si GitHub Actions est en train d’exécuter → une seule fois
+    if os.getenv("GITHUB_ACTIONS") == "true":
         check_vinted()
-        time.sleep(300)  # vérifie toutes les 5 minutes
+    else:
+        # Si tu lances en local → boucle infinie toutes les 5 min
+        while True:
+            check_vinted()
+            time.sleep(300)
